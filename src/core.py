@@ -364,7 +364,7 @@ def syslog(message):
 
         # send the syslog message
         remote_syslog = read_config("SYSLOG_REMOTE_HOST")
-	    remote_port = int(read_config("SYSLOG_REMOTE_PORT"))
+	remote_port = int(read_config("SYSLOG_REMOTE_PORT"))
         syslog_send(message, host=remote_syslog, port=remote_port)
 
     # if we are sending local syslog messages
