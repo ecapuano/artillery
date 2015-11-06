@@ -162,3 +162,5 @@ SOURCE_FEEDS="OFF"
 # Log to a Slack Channel
 SLACK_LOGGING="OFF"
 SLACK_URL=""
+SLACK_USER = "HoneyPot"
+SLACK_ICON = ":honey_pot:"

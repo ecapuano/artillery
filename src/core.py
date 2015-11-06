@@ -62,7 +62,7 @@ def is_config_enabled(param):
 def ban(ip):
     # ip check routine to see if its a valid IP address
     if not ip.startswith("#"):
-     if not ip.startswitH("0.0"):
+     if not ip.startswith("0.0"):
       if is_valid_ipv4(ip.strip()):
         # if we are running nix variant then trigger ban through iptables
         if is_posix():
@@ -422,9 +422,8 @@ def warn_the_good_guys(subject, alert):
 
 def send_slack(text):
     url = read_config("SLACK_URL")
-    slackUser = "HoneyPot"
-    slackIcon = ":honey_pot:"
-    slackGenMsg = ShortMessage
+    slackUser = read_config("SLACK_USER")
+    slackIcon = read_config("SLACK_ICON")
     data = {"username": slackUser, "icon_emoji": slackIcon, "text": text}
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     r = requests.post(url, data=json.dumps(data), headers=headers)
