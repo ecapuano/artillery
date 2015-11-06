@@ -11,7 +11,7 @@
 import time,sys,thread,os,subprocess
 
 # check if its installed
-if not os.path.isfile("/var/artillery/artillery.py"):
+if not os.path.isfile("/opt/artillery/artillery.py"):
     print "[*] Artillery is not installed, running setup.py.."
     subprocess.Popen("python setup.py", shell=True).wait()
     sys.exit()
@@ -20,10 +20,10 @@ from src.core import *
 # from src.config import * # yaml breaks config reading - disabling
 
 # create the database directories if they aren't there
-if not os.path.isdir("/var/artillery/database/"):
-        os.makedirs("/var/artillery/database/")
-if not os.path.isfile("/var/artillery/database/temp.database"):
-        filewrite = file("/var/artillery/database/temp.database", "w")
+if not os.path.isdir("/opt/artillery/database/"):
+        os.makedirs("/opt/artillery/database/")
+if not os.path.isfile("/opt/artillery/database/temp.database"):
+        filewrite = file("/opt/artillery/database/temp.database", "w")
         filewrite.write("")
         filewrite.close()
 

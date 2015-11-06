@@ -13,6 +13,6 @@ proc = subprocess.Popen("ps -A x | grep artiller[y]", stdout=subprocess.PIPE, st
 kill_artillery()
 
 print "[*] %s: Restarting Artillery Server..." % (grab_time())
-if os.path.isfile("/var/artillery/artillery.py"):
+if os.path.isfile("/opt/artillery/artillery.py"):
     write_log("[*] %s: Restarting the Artillery Server process..." % (grab_time()))
-    subprocess.Popen("python /var/artillery/artillery.py &", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    subprocess.Popen("python /opt/artillery/artillery.py &", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

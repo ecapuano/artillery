@@ -35,12 +35,12 @@ if answer.lower() == "y" or answer.lower() == "yes":
         print "[*] Beginning installation. This should only take a moment."
 
         # if directories aren't there then create them
-        if not os.path.isdir("/var/artillery/logs"):
-            os.makedirs("/var/artillery/logs")
-        if not os.path.isdir("/var/artillery/database"):
-            os.makedirs("/var/artillery/database")
-        if not os.path.isdir("/var/artillery/src/program_junk/"):
-            os.makedirs("/var/artillery/src/program_junk/")
+        if not os.path.isdir("/opt/artillery/logs"):
+            os.makedirs("/opt/artillery/logs")
+        if not os.path.isdir("/opt/artillery/database"):
+            os.makedirs("/opt/artillery/database")
+        if not os.path.isdir("/opt/artillery/src/program_junk/"):
+            os.makedirs("/opt/artillery/src/program_junk/")
 
         # install to rc.local
         print "[*] Adding artillery into startup through init scripts.."
@@ -59,7 +59,7 @@ if answer.lower() == "y" or answer.lower() == "yes":
             if os.path.isfile("/etc/init.d/rc.local"):
                 fileopen = file("/etc/init.d/rc.local", "r")
                 data = fileopen.read()
-                data = data.replace("sudo python /var/artillery/artillery.py &", "")
+                data = data.replace("sudo python /opt/artillery/artillery.py &", "")
                 filewrite = file("/etc/init.d/rc.local", "w")
                 filewrite.write(data)
                 filewrite.close()
@@ -76,15 +76,15 @@ if answer.lower() == "y" or answer.lower() == "yes":
     if is_posix():
         choice = raw_input("Do you want to keep Artillery updated? (requires internet) [y/n]: ")
         if choice == "y" or choice == "yes":
-            print "[*] Checking out Artillery through github to /var/artillery"
+            print "[*] Checking out Artillery through github to /opt/artillery"
             # if old files are there
-            if os.path.isdir("/var/artillery/"):
-                shutil.rmtree('/var/artillery')
-            subprocess.Popen("git clone https://github.com/trustedsec/artillery /var/artillery/", shell=True).wait()
-            print "[*] Finished. If you want to update Artillery go to /var/artillery and type 'git pull'"
+            if os.path.isdir("/opt/artillery/"):
+                shutil.rmtree('/opt/artillery')
+            subprocess.Popen("git clone https://github.com/ecapuano/artillery /opt/artillery/", shell=True).wait()
+            print "[*] Finished. If you want to update Artillery go to /opt/artillery and type 'git pull'"
         else:
             print "[*] Copying setup files over..."
-            subprocess.Popen("cp -rf * /var/artillery/", shell=True).wait()
+            subprocess.Popen("cp -rf * /opt/artillery/", shell=True).wait()
 
         # if os is Mac Os X than create a .plist daemon - changes added by contributor - Giulio Bortot
         if os.path.isdir("/Library/LaunchDaemons"):
@@ -92,7 +92,7 @@ if answer.lower() == "y" or answer.lower() == "yes":
             if not os.path.isfile("/Library/LaunchDaemons/com.artillery.plist"):
                 print "[*] Creating com.artillery.plist in your Daemons directory"
                 filewrite = file("/Library/LaunchDaemons/com.artillery.plist", "w")
-                filewrite.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n<key>Disabled</key>\n<false/>\n<key>ProgramArguments</key>\n<array>\n<string>/usr/bin/python</string>\n<string>/var/artillery/artillery.py</string>\n</array>\n<key>KeepAlive</key>\n<true/>\n<key>RunAtLoad</key>\n<true/>\n<key>Label</key>\n<string>com.artillery</string>\n<key>Debug</key>\n<true/>\n</dict>\n</plist>')
+                filewrite.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n<key>Disabled</key>\n<false/>\n<key>ProgramArguments</key>\n<array>\n<string>/usr/bin/python</string>\n<string>/opt/artillery/artillery.py</string>\n</array>\n<key>KeepAlive</key>\n<true/>\n<key>RunAtLoad</key>\n<true/>\n<key>Label</key>\n<string>com.artillery</string>\n<key>Debug</key>\n<true/>\n</dict>\n</plist>')
                 print "[*] Adding right permissions"
                 subprocess.Popen("chown root:wheel /Library/LaunchDaemons/com.artillery.plist", shell=True).wait()
 
@@ -102,12 +102,12 @@ if answer.lower() == "y" or answer.lower() == "yes":
             subprocess.Popen("/etc/init.d/artillery start", shell=True).wait()
 
     if is_posix():
-        print "[*] Installation complete. Edit /var/artillery/config in order to config artillery to your liking.."
+        print "[*] Installation complete. Edit /opt/artillery/config in order to config artillery to your liking.."
 
 if answer == "uninstall":
     if is_posix():
         os.remove("/etc/init.d/artillery")
-        subprocess.Popen("rm -rf /var/artillery", shell=True)
+        subprocess.Popen("rm -rf /opt/artillery", shell=True)
         subprocess.Popen("rm -rf /etc/init.d/artillery", shell=True)
         kill_artillery()
         print "[*] Artillery has been uninstalled. Manually kill the process if it is still running."

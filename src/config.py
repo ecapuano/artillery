@@ -1,7 +1,7 @@
 #
 #
 # config module for configuration reading/writing/translating
-# 
+#
 # module is disabled for now as this breaks config reading
 
 import os
@@ -17,8 +17,8 @@ def get_config_path():
     path = ""
     # ToDo: Support for command line argument pointing to config file.
     if is_posix():
-        if os.path.isfile("/var/artillery/config"):
-            path = "/var/artillery/config"
+        if os.path.isfile("/opt/artillery/config"):
+            path = "/opt/artillery/config"
         if os.path.isfile("config"):
             path = "config"
     if is_windows():

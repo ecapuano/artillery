@@ -26,9 +26,9 @@ def ssh_monitor(monitor_frequency):
         if os.path.isfile("/var/log/faillog"):
             fileopen1 = file("/var/log/faillog", "r")
 
-        if not os.path.isfile("/var/artillery/banlist.txt"):
+        if not os.path.isfile("/opt/artillery/banlist.txt"):
             # create a blank file
-            filewrite = file("/var/artillery/banlist.txt", "w")
+            filewrite = file("/opt/artillery/banlist.txt", "w")
             filewrite.write("")
             filewrite.close()
 
@@ -38,7 +38,7 @@ def ssh_monitor(monitor_frequency):
             counter = 0
             for line in fileopen1:
                 counter = 0
-                fileopen2 = file("/var/artillery/banlist.txt", "r")
+                fileopen2 = file("/opt/artillery/banlist.txt", "r")
                 line = line.rstrip()
                 # search for bad ssh
                 match = re.search("Failed password for", line)

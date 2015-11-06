@@ -60,23 +60,23 @@ def monitor_system(time_wait):
                                 total_compare = total_compare + compare
 
     # write out temp database
-    temp_database_file = file("/var/artillery/database/temp.database", "w")
+    temp_database_file = file("/opt/artillery/database/temp.database", "w")
     temp_database_file.write(total_compare)
     temp_database_file.close()
 
     # once we are done write out the database, if this is the first time, create a database then compare
-    if not os.path.isfile("/var/artillery/database/integrity.database"):
+    if not os.path.isfile("/opt/artillery/database/integrity.database"):
         # prep the integrity database to be written for first time
-        database_file = file("/var/artillery/database/integrity.database", "w")
+        database_file = file("/opt/artillery/database/integrity.database", "w")
         database_file.write(total_compare)
         database_file.close()
 
     # hash the original database
-    if os.path.isfile("/var/artillery/database/integrity.database"):
-        database_file = file("/var/artillery/database/integrity.database", "r")
+    if os.path.isfile("/opt/artillery/database/integrity.database"):
+        database_file = file("/opt/artillery/database/integrity.database", "r")
         database_content = database_file.read()
-        if os.path.isfile("/var/artillery/database/temp.database"):
-            temp_database_file = file("/var/artillery/database/temp.database", "r")
+        if os.path.isfile("/opt/artillery/database/temp.database"):
+            temp_database_file = file("/opt/artillery/database/temp.database", "r")
             temp_hash = temp_database_file.read()
 
             # hash the databases then compare
@@ -91,7 +91,7 @@ def monitor_system(time_wait):
             # if we don't match then there was something that was changed
             if database_hash != temp_database_hash:
                 # using diff for now, this will be rewritten properly at a later time
-                compare_files = subprocess.Popen("diff /var/artillery/database/integrity.database /var/artillery/database/temp.database", shell=True, stdout=subprocess.PIPE)
+                compare_files = subprocess.Popen("diff /opt/artillery/database/integrity.database /opt/artillery/database/temp.database", shell=True, stdout=subprocess.PIPE)
                 output_file = compare_files.communicate()[0]
                 if output_file == "":
                     # no changes
@@ -103,8 +103,8 @@ def monitor_system(time_wait):
                     warn_the_good_guys(subject, output_file)
 
     # put the new database as old
-    if os.path.isfile("/var/artillery/database/temp.database"):
-        shutil.move("/var/artillery/database/temp.database", "/var/artillery/database/integrity.database")
+    if os.path.isfile("/opt/artillery/database/temp.database"):
+        shutil.move("/opt/artillery/database/temp.database", "/opt/artillery/database/integrity.database")
 
 def start_monitor():
     # check if we want to monitor files

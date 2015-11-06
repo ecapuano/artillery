@@ -22,6 +22,8 @@ import datetime
 import signal
 from string import split, join
 import socket
+import requests
+import json
 
 # grab the current time
 def grab_time():
@@ -31,8 +33,8 @@ def grab_time():
 def get_config_path():
     path = ""
     if is_posix():
-        if os.path.isfile("/var/artillery/config"):
-            path = "/var/artillery/config"
+        if os.path.isfile("/opt/artillery/config"):
+            path = "/opt/artillery/config"
         if os.path.isfile("config"):
             path = "config"
     if is_windows():
@@ -64,10 +66,10 @@ def ban(ip):
       if is_valid_ipv4(ip.strip()):
         # if we are running nix variant then trigger ban through iptables
         if is_posix():
-            fileopen = file("/var/artillery/banlist.txt", "r")
+            fileopen = file("/opt/artillery/banlist.txt", "r")
             data = fileopen.read()
             if ip not in data:
-                filewrite = file("/var/artillery/banlist.txt", "a")
+                filewrite = file("/opt/artillery/banlist.txt", "a")
 		ban_check = read_config("HONEYPOT_BAN").lower()
 		# if we are actually banning IP addresses
 		if ban_check == "on":
@@ -83,15 +85,15 @@ def ban(ip):
 
 def update():
     if is_posix():
-        if os.path.isdir("/var/artillery/.svn"):
+        if os.path.isdir("/opt/artillery/.svn"):
             print "[!] Old installation detected that uses subversion. Fixing and moving to github."
             try:
-                shutil.rmtree("/var/artillery")
-                subprocess.Popen("git clone https://github.com/trustedsec/artillery", shell=True).wait()
+                shutil.rmtree("/opt/artillery")
+                subprocess.Popen("git clone https://github.com/ecapuano/artillery", shell=True).wait()
             except:
-                print "[!] Something failed. Please type 'git clone https://github.com/trustedsec/artillery /var/artillery' to fix!"
+                print "[!] Something failed. Please type 'git clone https://github.com/ecapuano/artillery /opt/artillery' to fix!"
 
-        subprocess.Popen("cd /var/artillery;git pull", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        subprocess.Popen("cd /opt/artillery;git pull", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
 def is_whitelisted_ip(ip):
     # set base counter
@@ -154,16 +156,16 @@ def check_banlist_path():
         if os.path.isfile("banlist.txt"):
             path = "banlist.txt"
 
-        if os.path.isfile("/var/artillery/banlist.txt"):
-            path = "/var/artillery/banlist.txt"
+        if os.path.isfile("/opt/artillery/banlist.txt"):
+            path = "/opt/artillery/banlist.txt"
 
         # if path is blank then try making the file
         if path == "":
-            if os.path.isdir("/var/artillery"):
-                filewrite=file("/var/artillery/banlist.txt", "w")
+            if os.path.isdir("/opt/artillery"):
+                filewrite=file("/opt/artillery/banlist.txt", "w")
                 filewrite.write("#\n#\n#\n# Binary Defense Systems Artillery Threat Intelligence Feed and Banlist Feed\n# https://www.binarydefense.com\n#\n# Note that this is for public use only.\n# The ATIF feed may not be used for commercial resale or in products that are charging fees for such services.\n# Use of these feeds for commerical (having others pay for a service) use is strictly prohibited.\n#\n#\n#\n")
                 filewrite.close()
-                path = "/var/artillery/banlist.txt"
+                path = "/opt/artillery/banlist.txt"
 
     if is_windows():
         program_files = os.environ["ProgramFiles"]
@@ -182,7 +184,7 @@ def check_banlist_path():
 def prep_email(alert):
     if is_posix():
         # write the file out to program_junk
-        filewrite=file("/var/artillery/src/program_junk/email_alerts.log", "w")
+        filewrite=file("/opt/artillery/src/program_junk/email_alerts.log", "w")
     if is_windows():
         program_files = os.environ["ProgramFiles"]
         filewrite=file(program_files + "\\Artillery\\src\\program_junk\\email_alerts.log", "w")
@@ -219,7 +221,7 @@ def create_iptables_subset():
         if not ip.startswith("#"):
             if ip not in iptablesbanlist:
 		ip = ip.strip()
-                ban(ip) 
+                ban(ip)
 
 # valid if IP address is legit
 def is_valid_ip(ip):
@@ -326,7 +328,7 @@ def threat_server():
     public_http = read_config("THREAT_LOCATION")
     if os.path.isdir(public_http):
         while 1:
-            subprocess.Popen("cp /var/artillery/banlist.txt %s" % (public_http), shell=True).wait()
+            subprocess.Popen("cp /opt/artillery/banlist.txt %s" % (public_http), shell=True).wait()
             time.sleep(800)
 
 # send the message then if its local or remote
@@ -362,7 +364,7 @@ def syslog(message):
 
         # send the syslog message
         remote_syslog = read_config("SYSLOG_REMOTE_HOST")
-	remote_port = int(read_config("SYSLOG_REMOTE_PORT"))
+	    remote_port = int(read_config("SYSLOG_REMOTE_PORT"))
         syslog_send(message, host=remote_syslog, port=remote_port)
 
     # if we are sending local syslog messages
@@ -376,11 +378,11 @@ def syslog(message):
 
     # if we don't want to use local syslog and just write to file in logs/alerts.log
     if type == "file":
-        if not os.path.isfile("/var/artillery/logs/alerts.log"):
-            filewrite = file("/var/artillery/logs/alerts.log", "w")
+        if not os.path.isfile("/opt/artillery/logs/alerts.log"):
+            filewrite = file("/opt/artillery/logs/alerts.log", "w")
             filewrite.write("***** Artillery Alerts Log *****\n")
             filewrite.close()
-        filewrite = file("/var/artillery/logs/alerts.log", "a")
+        filewrite = file("/opt/artillery/logs/alerts.log", "a")
         filewrite.write(message+"\n")
         filewrite.close()
 
@@ -413,7 +415,21 @@ def warn_the_good_guys(subject, alert):
     if is_config_enabled("CONSOLE_LOGGING"):
         print "{}".format(alert)
 
+    if is_config_enabled("SLACK_LOGGING"):
+        send_slack(alert)
+
     write_log(alert)
+
+def send_slack(text):
+    url = read_config("SLACK_URL")
+    slackUser = "HoneyPot"
+    slackIcon = ":honey_pot:"
+    slackGenMsg = ShortMessage
+    data = {"username": slackUser, "icon_emoji": slackIcon, "text": text}
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    r = requests.post(url, data=json.dumps(data), headers=headers)
+    print r.status_code
+    print r.content
 
 # send the actual email
 def send_mail(subject, text):
@@ -486,7 +502,7 @@ def refresh_log():
 		# sleep until interval is up
 		time.sleep(interval)
 		# overwrite the log with nothing
-		filewrite = file("/var/artillery/banlist.txt", "w")
+		filewrite = file("/opt/artillery/banlist.txt", "w")
 		filewrite.write("")
 		filewrite.close()
 
@@ -494,26 +510,26 @@ def refresh_log():
 # format the ip addresses and check to ensure they aren't duplicates
 def format_ips(url):
   try:
-      req = urllib2.Request(url)      
+      req = urllib2.Request(url)
       f = urllib2.urlopen(req).readlines()
   except urllib2.HTTPError, err:
       if err.code == '404':
           # Error 404, page not found!
           write_log("HTTPError: Error 404, URL {} not found.".format(url))
-          return 
-  except urllib2.URLError, err: 
+          return
+  except urllib2.URLError, err:
         # Name or service not found known, DNS unreachable, try again later!
         write_log("Received URL Error, Reason: {}".format(err.reason))
         return
   else:
-      fileopen = file("/var/artillery/banlist.txt", "r").read()
+      fileopen = file("/opt/artillery/banlist.txt", "r").read()
       # write the file
-      filewrite = file("/var/artillery/banlist.txt", "a")
+      filewrite = file("/opt/artillery/banlist.txt", "a")
       # iterate through
       for line in f:
           line=line.rstrip()
           if not "#" in line:
-              if not "//" in line:  
+              if not "//" in line:
                   # if we don't have the IP yet
                   if not line in fileopen:
 		      # make sure valid ipv4
@@ -528,11 +544,11 @@ def pull_source_feeds():
 		# pull source feeds
 		url = ['http://rules.emergingthreats.net/blockrules/compromised-ips.txt','https://zeustracker.abuse.ch/blocklist.php?download=badips','https://palevotracker.abuse.ch/blocklists.php?download=ipblocklist','http://malc0de.com/bl/IP_Blacklist.txt']
 		for urls in url:
-			format_ips(urls)	
+			format_ips(urls)
 		time.sleep(7200) # sleep for 2 hours
-	
+
 def sort_banlist():
-	ips = file("/var/artillery/banlist.txt", "r").readlines()
+	ips = file("/opt/artillery/banlist.txt", "r").readlines()
 	banner = """#
 #
 #
@@ -560,12 +576,10 @@ def sort_banlist():
 	tempips = [socket.inet_aton(ip) for ip in ips]
 	tempips.sort()
 	tempips.reverse()
-	filewrite = file("/var/artillery/banlist.txt", "w")
+	filewrite = file("/opt/artillery/banlist.txt", "w")
 	ips2 = [socket.inet_ntoa(ip) for ip in tempips]
 	ips_parsed = ""
 	for ips in ips2:
 		ips_parsed = ips + "\n" + ips_parsed
 	filewrite.write(banner + "\n" + ips_parsed)
 	filewrite.close()
-
-
